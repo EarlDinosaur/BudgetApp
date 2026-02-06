@@ -1,3 +1,4 @@
+import BottomNavigation from '@/components/bottom-navigation';
 import { Colors } from '@/constants/theme';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -226,33 +227,7 @@ export default function HomeScreen() {
         <View style={styles.bottomSpacer} />
       </ScrollView>
 
-      {/* Bottom Navigation */}
-      <View style={[styles.bottomNav, { backgroundColor: colors.backgroundSecondary, borderTopColor: colors.border }]}>
-        <Pressable style={styles.navItem}>
-          <View style={[styles.navIcon, { backgroundColor: colors.primary }]}>
-            <MaterialCommunityIcons name="home" size={20} color="white" />
-          </View>
-          <Text style={[styles.navLabel, { color: colors.primary }]}>Home</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <View style={[styles.navIcon, { backgroundColor: colors.backgroundTertiary }]}>
-            <MaterialCommunityIcons name="credit-card" size={20} color={colors.textSecondary} />
-          </View>
-          <Text style={[styles.navLabel, { color: colors.textSecondary }]}>Cards</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <View style={[styles.navIcon, { backgroundColor: colors.backgroundTertiary }]}>
-            <MaterialCommunityIcons name="silverware-fork-knife" size={20} color={colors.textSecondary} />
-          </View>
-          <Text style={[styles.navLabel, { color: colors.textSecondary }]}>Expenses</Text>
-        </Pressable>
-        <Pressable style={styles.navItem}>
-          <View style={[styles.navIcon, { backgroundColor: colors.backgroundTertiary }]}>
-            <MaterialCommunityIcons name="account" size={20} color={colors.textSecondary} />
-          </View>
-          <Text style={[styles.navLabel, { color: colors.textSecondary }]}>Profile</Text>
-        </Pressable>
-      </View>
+      <BottomNavigation />
     </SafeAreaView>
   );
 }
@@ -411,34 +386,6 @@ const styles = StyleSheet.create({
   },
   bottomSpacer: {
     height: 120,
-  },
-  bottomNav: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    height: 80,
-    flexDirection: 'row',
-    justifyContent: 'space-around',
-    alignItems: 'center',
-    borderTopWidth: 1,
-    paddingBottom: 12,
-  },
-  navItem: {
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: 6,
-  },
-  navIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 12,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navLabel: {
-    fontSize: 11,
-    fontWeight: '500',
   },
   breakdownSection: {
     marginBottom: 12,
