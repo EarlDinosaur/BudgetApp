@@ -1,22 +1,34 @@
 import { Colors } from '@/constants/theme';
+import { BrandPalette } from '@/context/FinanceContext';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { useRouter, useSegments } from 'expo-router';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useRef } from 'react';
+import { Animated, Pressable, StyleSheet, Text, View } from 'react-native';
+
+type TabId = 'index' | 'budgets' | 'goals' | 'cards';
 
 interface NavItem {
-  id: 'index' | 'explore' | 'cards' | 'profile';
+  id: TabId;
   label: string;
   icon: string;
-  route: string;
+  route: '/' | '/budgets' | '/goals' | '/cards';
 }
 
 const navItems: NavItem[] = [
   { id: 'index', label: 'Home', icon: 'home', route: '/' },
-  { id: 'cards', label: 'Cards', icon: 'credit-card', route: '/(tabs)/cards' },
-  { id: 'explore', label: 'Expenses', icon: 'silverware-fork-knife', route: '/(tabs)/explore' },
-  { id: 'profile', label: 'Profile', icon: 'account', route: '/(tabs)/profile' },
+  { id: 'budgets', label: 'Budgets', icon: 'chart-pie', route: '/budgets' },
+  { id: 'goals', label: 'Goals', icon: 'target', route: '/goals' },
+  { id: 'cards', label: 'Cards', icon: 'credit-card', route: '/cards' },
 ];
+
+// Per-tab theming so the nav bar picks up the screen's mood
+const TAB_THEME: Record<TabId, { accent: string; barBg: string }> = {
+  index: { accent: BrandPalette.moss, barBg: '#E8EFE2' },
+  budgets: { accent: BrandPalette.coffee, barBg: '#F6E9D7' },
+  goals: { accent: BrandPalette.moss, barBg: '#EEF3E8' },
+  cards: { accent: BrandPalette.mocha, barBg: '#EFE9DC' },
+};
 
 export default function BottomNavigation() {
   const router = useRouter();
@@ -24,41 +36,102 @@ export default function BottomNavigation() {
   const theme = useColorScheme() ?? 'light';
   const colors = Colors[theme];
 
-  // Get the current active route from segments
-  // segments[1] will be the screen name (e.g., 'index', 'explore')
-  const currentRoute = segments[1] || 'index';
+  const currentRoute = (segments[1] as TabId) || 'index';
+  const tabTheme = TAB_THEME[currentRoute] ?? TAB_THEME.index;
 
   return (
-    <View style={[styles.bottomNav, { backgroundColor: colors.backgroundSecondary, borderTopColor: colors.border }]}>
-      {navItems.map(item => {
+    <View style={[styles.bottomNav, { backgroundColor: tabTheme.barBg, borderTopColor: colors.border }]}>
+      {navItems.map((item) => {
         const isActive = currentRoute === item.id;
+        const activeColor = TAB_THEME[item.id].accent;
         return (
-          <Pressable
+          <NavItemButton
             key={item.id}
-            style={styles.navItem}
+            isActive={isActive}
+            activeColor={activeColor}
+            item={item}
+            inactiveBg={colors.backgroundTertiary}
+            inactiveText={colors.textSecondary}
             onPress={() => router.push(item.route)}
-          >
-            <View
-              style={[
-                styles.navIcon,
-                {
-                  backgroundColor: isActive ? colors.primary : colors.backgroundTertiary,
-                },
-              ]}
-            >
-              <MaterialCommunityIcons
-                name={item.icon as any}
-                size={20}
-                color={isActive ? 'white' : colors.textSecondary}
-              />
-            </View>
-            <Text style={[styles.navLabel, { color: isActive ? colors.primary : colors.textSecondary }]}>
-              {item.label}
-            </Text>
-          </Pressable>
+          />
         );
       })}
     </View>
+  );
+}
+
+function NavItemButton({
+  item,
+  isActive,
+  activeColor,
+  inactiveBg,
+  inactiveText,
+  onPress,
+}: {
+  item: NavItem;
+  isActive: boolean;
+  activeColor: string;
+  inactiveBg: string;
+  inactiveText: string;
+  onPress: () => void;
+}) {
+  const scale = useRef(new Animated.Value(1)).current;
+  const activeAnim = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+
+  // Spring up slightly when a tab becomes active
+  useEffect(() => {
+    Animated.spring(activeAnim, {
+      toValue: isActive ? 1 : 0,
+      useNativeDriver: true,
+      speed: 18,
+      bounciness: 10,
+    }).start();
+  }, [isActive, activeAnim]);
+
+  const handlePressIn = () => {
+    Animated.spring(scale, {
+      toValue: 0.9,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 0,
+    }).start();
+  };
+  const handlePressOut = () => {
+    Animated.spring(scale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 20,
+      bounciness: 10,
+    }).start();
+  };
+
+  const iconScale = activeAnim.interpolate({ inputRange: [0, 1], outputRange: [1, 1.08] });
+  const iconLift = activeAnim.interpolate({ inputRange: [0, 1], outputRange: [0, -2] });
+
+  return (
+    <Pressable
+      style={styles.navItem}
+      onPress={onPress}
+      onPressIn={handlePressIn}
+      onPressOut={handlePressOut}
+    >
+      <Animated.View
+        style={[
+          styles.navIcon,
+          { backgroundColor: isActive ? activeColor : inactiveBg },
+          { transform: [{ scale: Animated.multiply(scale, iconScale) }, { translateY: iconLift }] },
+        ]}
+      >
+        <MaterialCommunityIcons
+          name={item.icon as any}
+          size={20}
+          color={isActive ? 'white' : inactiveText}
+        />
+      </Animated.View>
+      <Text style={[styles.navLabel, { color: isActive ? activeColor : inactiveText }]}>
+        {item.label}
+      </Text>
+    </Pressable>
   );
 }
 
